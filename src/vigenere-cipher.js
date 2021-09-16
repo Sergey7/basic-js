@@ -21,30 +21,61 @@ import { NotImplementedError } from '../extensions/index.js';
  */
 export default class VigenereCipheringMachine {
   constructor (mod) {
-    this.machine = mod;
-    this.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    this.machine = (typeof(mod) === 'boolean')?mod:true;
+    this.alphabet = "abcdefghijklmnopqrstuvwxyz";
+    this.regex = new RegExp('[a-z]');
   }
+
+  getMessageTrueLength (message, key) {
+    let messageOnlyText = message.replace(/[^a-z]+/g, '')
+    if (messageOnlyText.length > key.length) {
+      key = key.repeat(Math.ceil((messageOnlyText.length - key.length) / key.length) + 1);
+      key = key.substring(0, messageOnlyText.length)
+    }
+    return key
+  }
+
   encrypt(message, key) {
     if (!message || !key) {
       throw new Error(`Incorrect arguments!`)
     }
-    while (message.length > key.length) {
-      key 
+    message = message.toLowerCase()
+    key = key.toLowerCase()
+    key = this.getMessageTrueLength(message, key)
+    let encryptStr = '';
+    let noChar = 0;
+    for (let i = 0; i < message.length; i++) {
+      if (!this.regex.test(message[i])) {
+        encryptStr += message[i];
+        noChar++
+        continue
+      }
+      encryptStr += this.alphabet[(this.alphabet.search(message[i]) + this.alphabet.search(key[i - noChar])) % 26]
     }
+    return (this.machine)?encryptStr.toUpperCase():encryptStr.toUpperCase().split('').reverse().join('');
   }
   decrypt(message, key) {
     if (!message || !key) {
       throw new Error(`Incorrect arguments!`)
     }
+    message = message.toLowerCase()
+    key = key.toLowerCase()
+    key = this.getMessageTrueLength(message, key)
+    let encryptStr = '';
+    let noChar = 0;
+    for (let i = 0; i < message.length; i++) {
+      if (!this.regex.test(message[i])) {
+        encryptStr += message[i];
+        noChar++
+        continue
+      }
+      encryptStr += this.alphabet[(this.alphabet.search(message[i]) + 26 - this.alphabet.search(key[i - noChar])) % 26] 
+    }
+    return (this.machine)?encryptStr.toUpperCase():encryptStr.toUpperCase().split('').reverse().join('');
   }
 }
-const al = []
-console.log('a'.charCodeAt());
-console.log('t'.charCodeAt());
-console.log('e'.charCodeAt());
-const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-let n = alphabet.slice(19) + alphabet.slice(0, 19)
-let index = alphabet.search('E')
-console.log('in', index);
-console.log(n[index]);
-console.log(alphabet[15]);
+
+// const directMachine = new VigenereCipheringMachine();
+// console.log( directMachine.encrypt('attack at dawn!', 'alphonse'));
+// console.log( directMachine.decrypt('AEIHQX SX DLLU!', 'alphonse'));
+// // AEIHQX SX DLLU!
